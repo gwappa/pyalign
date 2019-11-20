@@ -39,7 +39,7 @@ class AlignmentResult(_namedtuple('_AlignmentResult', ('aligned', 'loss'))):
     @staticmethod
     def from_pair(item1, item2, distance):
         try:
-            return AlignmentResult(Aligned(item1, item2), distance(item1, item2))
+            return AlignmentResult([ Aligned(item1, item2) ], distance(item1, item2))
         except ValueError:
             return AlignmentResult([], _INFTY)
 
