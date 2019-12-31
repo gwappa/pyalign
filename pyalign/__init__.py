@@ -110,7 +110,7 @@ def SmithWaterman(first_seq, second_seq, distance=None,
         if (offset1, offset2) not in memo.keys():
             if offset1 == first_size:
                 if offset2 == second_size:
-                    memo[offset1, offset2] = AlignmentResult([], 0)
+                    memo[offset1, offset2] = AlignmentResult(offset1, offset2, [], 0)
                 else:
                     memo[offset1, offset2] = AlignmentResult.from_pair(None,
                                                                 offset2,
