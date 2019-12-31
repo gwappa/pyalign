@@ -68,10 +68,23 @@ class AlignmentResult(_namedtuple('_AlignmentResult', ('aligned', 'loss'))):
             raise ValueError(f"expected AlignmentResult, got {other.__class__.__name__}")
         return self.__class__(self.aligned + other.aligned, self.loss + other.loss)
 
-def difference(item1, item2):
-    return abs(item1 - item2)
+def difference(skip_penalty=None, skip_penalty2=None):
+    if skip_penalty is None:
+        skip_penalty = _INFTY
+    skip_penalty1 = skip_penalty
+    if skip_penalty2 is None:
+        skip_penalty2 = skip_penalty
+    def _compute_difference(item1, item2):
+        if item1 is None:
+            return skip_penalty1
+        elif item2 is None:
+            return skip_penalty2
+        else:
+            return abs(item1 - item2)
+    return _compute_difference
 
-def SmithWaterman(first_seq, second_seq, distance=None):
+def SmithWaterman(first_seq, second_seq, distance=None,
+                  skip_penalty=None, skip_penalty2=None):
     """perform alignment between `first_seq` and `second_seq`
     based on the Smith-Waterman method.
 
@@ -87,7 +100,7 @@ def SmithWaterman(first_seq, second_seq, distance=None):
         raise ValueError("size of the sequence may be too long; consider splitting in pieces")
 
     if distance is None:
-        distance = difference
+        distance = difference(skip_penalty, skip_penalty)
 
     # prepare memo
     memo = {}
