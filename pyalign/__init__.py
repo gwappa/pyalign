@@ -120,7 +120,7 @@ def SmithWaterman(first_seq, second_seq, distance=None,
                                                 + _compute_alignment(offset1, offset2+1)
             elif offset2 == second_size:
                 memo[offset1, offset2] = AlignmentResult.from_pair(offset1,
-                                                                None
+                                                                None,
                                                                 first_seq[offset1],
                                                                 None,
                                                                 distance) \
