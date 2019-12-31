@@ -120,7 +120,7 @@ def SmithWaterman(first_seq, second_seq, distance=None,
                 memo[offset1, offset2] = AlignmentResult.from_pair(first_seq[offset1],
                                                                 None,
                                                                 distance) \
-                                            + _compute_alignment(offset1+1, offset2, base_loss=distance(first_seq[offset1], None))
+                                            + _compute_alignment(offset1+1, offset2)
             else:
                 # compute recursively
                 item1      = first_seq[offset1]
