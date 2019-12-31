@@ -41,7 +41,7 @@ class AlignmentResult(_namedtuple('_AlignmentResult', ('offset1', 'offset2', 'al
         try:
             return AlignmentResult(offset1, offset2, [ Aligned(item1, item2) ], distance(item1, item2))
         except ValueError:
-            return AlignmentResult([], _INFTY)
+            return AlignmentResult(offset1, offset2, [], _INFTY)
 
     def __gt__(self, other):
         if not isinstance(other, AlignmentResult):
@@ -66,7 +66,9 @@ class AlignmentResult(_namedtuple('_AlignmentResult', ('offset1', 'offset2', 'al
     def __add__(self, other):
         if not isinstance(other, AlignmentResult):
             raise ValueError(f"expected AlignmentResult, got {other.__class__.__name__}")
-        return self.__class__(self.aligned + other.aligned, self.loss + other.loss)
+        return self.__class__(self.offset1, self.offset2,
+                              self.aligned + other.aligned,
+                              self.loss + other.loss)
 
 def difference(skip_penalty=None, skip_penalty2=None):
     if skip_penalty is None:
