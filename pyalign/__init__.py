@@ -35,11 +35,11 @@ def debug(msg, end='\n'):
 
 Aligned = _namedtuple('Aligned', ('first', 'second'))
 
-class AlignmentResult(_namedtuple('_AlignmentResult', ('aligned', 'loss'))):
+class AlignmentResult(_namedtuple('_AlignmentResult', ('offset1', 'offset2', 'aligned', 'loss'))):
     @staticmethod
-    def from_pair(item1, item2, distance):
+    def from_pair(offset1, offset2, item1, item2, distance):
         try:
-            return AlignmentResult([ Aligned(item1, item2) ], distance(item1, item2))
+            return AlignmentResult(offset1, offset2, [ Aligned(item1, item2) ], distance(item1, item2))
         except ValueError:
             return AlignmentResult([], _INFTY)
 
@@ -113,11 +113,15 @@ def SmithWaterman(first_seq, second_seq, distance=None,
                     memo[offset1, offset2] = AlignmentResult([], 0)
                 else:
                     memo[offset1, offset2] = AlignmentResult.from_pair(None,
+                                                                offset2,
+                                                                None,
                                                                 second_seq[offset2],
                                                                 distance) \
                                                 + _compute_alignment(offset1, offset2+1)
             elif offset2 == second_size:
-                memo[offset1, offset2] = AlignmentResult.from_pair(first_seq[offset1],
+                memo[offset1, offset2] = AlignmentResult.from_pair(offset1,
+                                                                None
+                                                                first_seq[offset1],
                                                                 None,
                                                                 distance) \
                                             + _compute_alignment(offset1+1, offset2)
@@ -126,11 +130,11 @@ def SmithWaterman(first_seq, second_seq, distance=None,
                 item1      = first_seq[offset1]
                 item2      = second_seq[offset2]
 
-                match      = AlignmentResult.from_pair(item1, item2, distance) \
+                match      = AlignmentResult.from_pair(offset1, offset2, item1, item2, distance) \
                                 + _compute_alignment(offset1+1, offset2+1)
-                skip_item1 = AlignmentResult.from_pair(None, item2, distance) \
+                skip_item1 = AlignmentResult.from_pair(None, offset2, None, item2, distance) \
                                 + _compute_alignment(offset1,   offset2+1)
-                skip_item2 = AlignmentResult.from_pair(item1, None, distance) \
+                skip_item2 = AlignmentResult.from_pair(offset1, None, item1, None, distance) \
                                 + _compute_alignment(offset1+1, offset2)
                 memo[offset1, offset2] = min(match, skip_item1, skip_item2)
 
