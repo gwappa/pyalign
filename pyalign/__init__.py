@@ -27,21 +27,22 @@ from collections import namedtuple as _namedtuple
 
 VERSION_STR = '1.0.0a1'
 
-DEBUG = True
+DEBUG = False
 
 def debug(msg, end='\n'):
     if DEBUG is True:
         print(f"... {msg}", end=end, flush=True)
 
+Item    = _namedtuple('Item', ('offset', 'value'))
 Aligned = _namedtuple('Aligned', ('first', 'second'))
 
-class AlignmentResult(_namedtuple('_AlignmentResult', ('offset1', 'offset2', 'aligned', 'loss'))):
+class AlignmentResult(_namedtuple('_AlignmentResult', ('aligned', 'loss'))):
     @staticmethod
-    def from_pair(offset1, offset2, item1, item2, distance):
+    def from_pair(item1, item2, distance):
         try:
-            return AlignmentResult(offset1, offset2, [ Aligned(item1, item2) ], distance(item1, item2))
+            return AlignmentResult([ Aligned(item1, item2) ], distance(item1.value, item2.value))
         except ValueError:
-            return AlignmentResult(offset1, offset2, [], _INFTY)
+            return AlignmentResult([], _INFTY)
 
     def __gt__(self, other):
         if not isinstance(other, AlignmentResult):
@@ -66,8 +67,7 @@ class AlignmentResult(_namedtuple('_AlignmentResult', ('offset1', 'offset2', 'al
     def __add__(self, other):
         if not isinstance(other, AlignmentResult):
             raise ValueError(f"expected AlignmentResult, got {other.__class__.__name__}")
-        return self.__class__(self.offset1, self.offset2,
-                              self.aligned + other.aligned,
+        return self.__class__(self.aligned + other.aligned,
                               self.loss + other.loss)
 
 def difference(skip_penalty=None, skip_penalty2=None):
@@ -107,36 +107,33 @@ def SmithWaterman(first_seq, second_seq, distance=None,
     # prepare memo
     memo = {}
 
+    NOVALUE = Item(None, None)
     def _compute_alignment(offset1, offset2):
         debug(f"--> {offset1}, {offset2}")
         if (offset1, offset2) not in memo.keys():
             if offset1 == first_size:
                 if offset2 == second_size:
-                    memo[offset1, offset2] = AlignmentResult(offset1, offset2, [], 0)
+                    memo[offset1, offset2] = AlignmentResult([], 0)
                 else:
-                    memo[offset1, offset2] = AlignmentResult.from_pair(None,
-                                                                offset2,
-                                                                None,
-                                                                second_seq[offset2],
+                    memo[offset1, offset2] = AlignmentResult.from_pair(NOVALUE,
+                                                                Item(offset2, second_seq[offset2]),
                                                                 distance) \
                                                 + _compute_alignment(offset1, offset2+1)
             elif offset2 == second_size:
-                memo[offset1, offset2] = AlignmentResult.from_pair(offset1,
-                                                                None,
-                                                                first_seq[offset1],
-                                                                None,
+                memo[offset1, offset2] = AlignmentResult.from_pair(Item(offset1,first_seq[offset1]),
+                                                                NOVALUE,
                                                                 distance) \
                                             + _compute_alignment(offset1+1, offset2)
             else:
                 # compute recursively
-                item1      = first_seq[offset1]
-                item2      = second_seq[offset2]
+                item1      = Item(offset1,first_seq[offset1])
+                item2      = Item(offset2,second_seq[offset2])
 
-                match      = AlignmentResult.from_pair(offset1, offset2, item1, item2, distance) \
+                match      = AlignmentResult.from_pair(item1,   item2,   distance) \
                                 + _compute_alignment(offset1+1, offset2+1)
-                skip_item1 = AlignmentResult.from_pair(None, offset2, None, item2, distance) \
+                skip_item1 = AlignmentResult.from_pair(NOVALUE, item2,   distance) \
                                 + _compute_alignment(offset1,   offset2+1)
-                skip_item2 = AlignmentResult.from_pair(offset1, None, item1, None, distance) \
+                skip_item2 = AlignmentResult.from_pair(item1,   NOVALUE, distance) \
                                 + _compute_alignment(offset1+1, offset2)
                 memo[offset1, offset2] = min(match, skip_item1, skip_item2)
 
