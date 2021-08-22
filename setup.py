@@ -22,11 +22,10 @@
 # SOFTWARE.
 #
 import setuptools
-from pyalign import VERSION_STR
 
 setuptools.setup(
     name='pyalign',
-    version=VERSION_STR,
+    version='1.0.0a1',
     description='generic alignment tool',
     url='https://github.com/gwappa/pyalign',
     author='Keisuke Sehara',
